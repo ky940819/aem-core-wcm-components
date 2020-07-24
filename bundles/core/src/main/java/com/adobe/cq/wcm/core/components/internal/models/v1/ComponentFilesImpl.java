@@ -15,10 +15,7 @@
  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 package com.adobe.cq.wcm.core.components.internal.models.v1;
 
-import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
@@ -27,9 +24,9 @@ import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import javax.inject.Named;
 
+import com.adobe.cq.wcm.core.components.internal.ComponentFileUtils;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.resource.LoginException;
-import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.resource.ResourceResolverFactory;
 import org.apache.sling.models.annotations.Default;
@@ -38,8 +35,6 @@ import org.apache.sling.models.annotations.injectorspecific.OSGiService;
 
 import com.adobe.cq.wcm.core.components.internal.Utils;
 import com.adobe.cq.wcm.core.components.models.ComponentFiles;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -86,46 +81,17 @@ public class ComponentFilesImpl implements ComponentFiles {
     public List<String> getPaths() {
         if (paths == null) {
             try (ResourceResolver resourceResolver = resolverFactory.getServiceResourceResolver(Collections.singletonMap(ResourceResolverFactory.SUBSERVICE, COMPONENTS_SERVICE))) {
-                paths = new LinkedList<>();
-
-                Set<String> seenResourceTypes = new HashSet<>();
-                for (String resourceType : resourceTypeSet) {
-                    addPaths(resourceType, paths, seenResourceTypes, resourceResolver);
-                }
+                this.paths = ComponentFileUtils.getPaths(
+                    this.resourceTypeSet,
+                    this.pattern,
+                    this.inherited,
+                    resourceResolver
+                );
             } catch (LoginException e) {
                 LOG.error("Cannot login as a service user", e);
             }
         }
         return paths;
-    }
-
-    /**
-     * Adds file paths to a given collection, based on a resource type, filtered by the defined RegEx pattern.
-     *
-     * @param resourceType - the resource type of the component to look into for files matching the defined pattern
-     * @param paths - the given collection of file paths
-     * @param seenResourceTypes - a set of resource types that were previously searched into, to avoid inheritance loops
-     * @param resourceResolver - The resource resolver.
-     */
-    private void addPaths(@Nullable final String resourceType,
-                          @NotNull final Collection<String> paths,
-                          @NotNull final Set<String> seenResourceTypes,
-                          @NotNull final ResourceResolver resourceResolver) {
-        if (resourceType != null && !seenResourceTypes.contains(resourceType)) {
-            Resource resource = resourceResolver.getResource(resourceType);
-            if (resource != null) {
-                boolean matched = false;
-                for (Resource child : resource.getChildren()) {
-                    if (pattern.matcher(child.getName()).matches()) {
-                        paths.add(child.getPath());
-                        matched = true;
-                    }
-                }
-                if (inherited && !matched) {
-                    addPaths(resource.getResourceSuperType(), paths, seenResourceTypes, resourceResolver);
-                }
-            }
-        }
     }
 
 }
