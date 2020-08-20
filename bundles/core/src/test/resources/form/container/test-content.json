@@ -88,6 +88,23 @@
                     "jcr:created"       : "Wed Oct 05 2016 16:49:14 GMT+0530",
                     "jcr:lastModified"  : "Wed Oct 05 2016 16:49:14 GMT+0530",
                     "sling:resourceType": "core/wcm/components/form/container/v2/container"
+                },
+                "container-v2-captcha-required": {
+                    "jcr:primaryType"   : "nt:unstructured",
+                    "jcr:createdBy"     : "admin",
+                    "jcr:lastModifiedBy": "admin",
+                    "jcr:created"       : "Wed Oct 05 2020 16:49:14 GMT+0530",
+                    "jcr:lastModified"  : "Wed Oct 05 2020 16:49:14 GMT+0530",
+                    "sling:resourceType": "core/wcm/components/form/container/v2/container",
+                    "captcha"    : {
+                        "jcr:primaryType"   : "nt:unstructured",
+                        "jcr:createdBy"     : "admin",
+                        "jcr:lastModifiedBy": "admin",
+                        "jcr:created"       : "Wed Oct 05 2020 16:28:06 GMT+0530",
+                        "name"              : "input-field-2",
+                        "jcr:lastModified"  : "Wed Oct 05 2020 16:28:22 GMT+0530",
+                        "sling:resourceType": "core/wcm/components/form/captcha/v1/captcha"
+                    }
                 }
             }
         }
