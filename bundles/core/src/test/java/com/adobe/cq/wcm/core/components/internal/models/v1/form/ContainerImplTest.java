@@ -22,13 +22,13 @@ import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 import org.apache.sling.api.resource.Resource;
-import org.apache.sling.servlethelpers.MockRequestDispatcherFactory;
 import org.apache.sling.testing.mock.sling.servlet.MockSlingHttpServletRequest;
+import io.wcm.testing.mock.aem.junit5.AemContext;
+import io.wcm.testing.mock.aem.junit5.AemContextExtension;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.adobe.cq.export.json.SlingModelFilter;
 import com.adobe.cq.wcm.core.components.Utils;
@@ -39,13 +39,12 @@ import com.day.cq.wcm.api.NameConstants;
 import com.day.cq.wcm.foundation.forms.FormStructureHelper;
 import com.day.cq.wcm.foundation.forms.FormStructureHelperFactory;
 import com.day.cq.wcm.msm.api.MSMNameConstants;
-import io.wcm.testing.mock.aem.junit5.AemContext;
-import io.wcm.testing.mock.aem.junit5.AemContextExtension;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.mockito.Mockito.mock;
 
-@ExtendWith({AemContextExtension.class, MockitoExtension.class})
+@ExtendWith({AemContextExtension.class})
 public class ContainerImplTest {
 
     private static final String TEST_BASE = "/form/container";
@@ -57,16 +56,10 @@ public class ContainerImplTest {
 
     public final AemContext context = CoreComponentTestContext.newAemContext();
 
-    @Mock
-    private FormStructureHelper formStructureHelper;
-
-    @Mock
-    private MockRequestDispatcherFactory requestDispatcherFactory;
-
     @BeforeEach
     public void setUp() {
         context.load().json(TEST_BASE + CoreComponentTestContext.TEST_CONTENT_JSON, CONTAINING_PAGE);
-        context.registerService(FormStructureHelperFactory.class, resource -> formStructureHelper);
+        context.registerService(FormStructureHelperFactory.class, resource -> mock(FormStructureHelper.class));
         context.registerService(SlingModelFilter.class, new SlingModelFilter() {
 
             private final Set<String> IGNORED_NODE_NAMES = new HashSet<String>() {{
@@ -93,6 +86,7 @@ public class ContainerImplTest {
     }
 
     @Test
+    @DisplayName("Form with custom attributes and fields")
     public void testFormWithCustomAttributesAndFields() {
         Container container = getContainerUnderTest(FORM1_PATH);
         assertEquals("my-id", container.getId());
@@ -107,6 +101,7 @@ public class ContainerImplTest {
     }
 
     @Test
+    @DisplayName("Form without custom attributes and fields")
     public void testFormWithoutCustomAttributesAndField() {
         Container container = getContainerUnderTest(FORM2_PATH);
         assertEquals("multipart/form-data", container.getEnctype());
@@ -118,6 +113,7 @@ public class ContainerImplTest {
     }
 
     @Test
+    @DisplayName("Form V2 JSON model exporter")
     public void testV2JSONExport() {
         Container container = getContainerUnderTest(FORM3_PATH);
         Utils.testJSONExport(container, Utils.getTestExporterJSONPath(TEST_BASE, FORM3_PATH));
@@ -128,8 +124,9 @@ public class ContainerImplTest {
         if (resource == null) {
             throw new IllegalStateException("Does the test resource " + resourcePath + " exist?");
         }
-        MockSlingHttpServletRequest request = context.request();
-        request.setContextPath(CONTEXT_PATH);
-        return request.adaptTo(Container.class);
+        this.context.currentPage(CONTAINING_PAGE);
+        this.context.currentResource(resource);
+        this.context.request().setContextPath(CONTEXT_PATH);
+        return this.context.request().adaptTo(Container.class);
     }
 }
