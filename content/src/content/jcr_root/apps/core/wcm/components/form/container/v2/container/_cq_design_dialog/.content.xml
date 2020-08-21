@@ -30,6 +30,28 @@
                 sling:resourceType="granite/ui/components/coral/foundation/tabs"
                 maximized="{Boolean}true">
                 <items jcr:primaryType="nt:unstructured">
+                    <formContainerSettings
+                        jcr:primaryType="nt:unstructured"
+                        jcr:title="Form Container Settings"
+                        sling:resourceType="granite/ui/components/coral/foundation/container"
+                        margin="{Boolean}true">
+                        <items jcr:primaryType="nt:unstructured">
+                            <container
+                                jcr:primaryType="nt:unstructured"
+                                sling:resourceType="granite/ui/components/coral/foundation/container">
+                                <items jcr:primaryType="nt:unstructured">
+                                    <recaptcha
+                                        jcr:primaryType="nt:unstructured"
+                                        sling:resourceType="granite/ui/components/coral/foundation/form/checkbox"
+                                        text="Require reCAPTCHA"
+                                        name="./captchaRequired"
+                                        deleteHint="{Boolean}true"
+                                        value="{Boolean}true">
+                                    </recaptcha>
+                                </items>
+                            </container>
+                        </items>
+                    </formContainerSettings>
                     <allowedcomponents
                         jcr:primaryType="nt:unstructured"
                         jcr:title="Allowed Components"
