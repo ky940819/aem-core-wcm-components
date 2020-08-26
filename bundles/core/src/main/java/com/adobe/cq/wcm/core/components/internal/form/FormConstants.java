@@ -67,4 +67,8 @@ public final class FormConstants {
     public static final String RT_CORE_FORM_TEXT_V1 = RT_CORE_FORM_PREFIX + "text/v1/text";
     /** The resource type for text fields v2 */
     public static final String RT_CORE_FORM_TEXT_V2 = RT_CORE_FORM_PREFIX + "text/v2/text";
+
+
+    /** The resource type for form captcha v1 */
+    public final static String RT_CORE_FORM_CAPTCHA_V1 = RT_CORE_FORM_PREFIX + "captcha/v1/captcha";
 }
