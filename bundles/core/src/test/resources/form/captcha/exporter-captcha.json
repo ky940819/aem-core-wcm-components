@@ -1,0 +1,10 @@
+{
+    "id": "form-captcha-456011791",
+    "title": "Captcha",
+    "name": "",
+    "value": "",
+    "siteKey": "SITE_KEY",
+    "type": "TYPE",
+    "position": "bottom-left",
+    ":type": "core/wcm/components/form/captcha/v1/captcha"
+}
