@@ -113,11 +113,6 @@ public final class CoreFormHandlingServlet extends SlingAllMethodsServlet implem
     static final String EXTENSION = "html";
 
     /**
-     * The name of the request property containing the users reCaptcha challenge response token.
-     */
-    static final String RECAPTCHA_TOKEN_PARAMETER = "g-recaptcha-response";
-
-    /**
      * The helper for processing forms.
      */
     private transient FormsHandlingServletHelper formsHandlingServletHelper;
@@ -219,7 +214,7 @@ public final class CoreFormHandlingServlet extends SlingAllMethodsServlet implem
     private boolean validateCaptcha(@NotNull final SlingHttpServletRequest request, @NotNull final Resource resource) {
         return Optional.of(this.recaptchaValidatorFactory)
             .flatMap(factory -> factory.getValidator(resource))
-            .map(validator -> validator.validate(request.getParameter(RECAPTCHA_TOKEN_PARAMETER)))
+            .map(validator -> validator.validate(request))
             .orElse(Boolean.FALSE);
     }
 
