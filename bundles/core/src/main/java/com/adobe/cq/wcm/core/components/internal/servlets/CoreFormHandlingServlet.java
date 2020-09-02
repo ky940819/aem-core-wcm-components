@@ -16,8 +16,9 @@
 package com.adobe.cq.wcm.core.components.internal.servlets;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Optional;
-import java.util.function.Supplier;
+import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
@@ -34,6 +35,7 @@ import com.day.cq.wcm.api.policies.ContentPolicy;
 import com.day.cq.wcm.api.policies.ContentPolicyManager;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
+import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.servlets.HttpConstants;
 import org.apache.sling.api.servlets.ServletResolverConstants;
 import org.apache.sling.api.servlets.SlingAllMethodsServlet;
@@ -159,7 +161,7 @@ public final class CoreFormHandlingServlet extends SlingAllMethodsServlet implem
     @Override
     protected void doPost(@NotNull final SlingHttpServletRequest request, @NotNull final SlingHttpServletResponse response)
             throws ServletException, IOException {
-        if (!this.captchaRequired(request) || this.validateCaptcha(request)) {
+        if (validateCaptchas(request)) {
             formsHandlingServletHelper.doPost(request, response);
         } else {
             response.sendError(HttpServletResponse.SC_FORBIDDEN);
@@ -167,28 +169,45 @@ public final class CoreFormHandlingServlet extends SlingAllMethodsServlet implem
     }
 
     /**
-     * Check if captcha is required for the current request.
-     * A captcha is required if the form container policy requires it,
-     * or if the form container contains a button with captcha enabled.
+     * Check if the form container policy requires that a Captcha be completed.
      *
      * @param request The current request.
      * @return True if captcha validation is required, false if not.
      */
-    private boolean captchaRequired(@NotNull final SlingHttpServletRequest request) {
-        // supplier to check if required by policy
-        Supplier<Boolean> captchaRequiredByPolicy = () ->
-            Optional.ofNullable(request.getResourceResolver().adaptTo(ContentPolicyManager.class))
-                .map(policyManager -> policyManager.getPolicy(request.getResource(), request))
-                .map(ContentPolicy::getProperties)
-                .map(props -> props.get(Captcha.PN_CAPTCHA_REQUIRED, Boolean.FALSE))
-                .orElse(Boolean.FALSE);
+    private boolean captchaRequiredByPolicy(@NotNull final SlingHttpServletRequest request) {
+        return Optional.ofNullable(request.getResourceResolver().adaptTo(ContentPolicyManager.class))
+            .map(policyManager -> policyManager.getPolicy(request.getResource(), request))
+            .map(ContentPolicy::getProperties)
+            .map(props -> props.get(Captcha.PN_CAPTCHA_REQUIRED, Boolean.class))
+            .orElse(Boolean.FALSE);
+    }
 
-        Supplier<Boolean> captchaRequiredByContent = () ->
-            StreamSupport.stream(formStructureHelperFactory.getFormStructureHelper(request.getResource())
-                .getFormElements(request.getResource()).spliterator(), false)
-                .anyMatch(resource -> resource.isResourceType(FormConstants.RT_CORE_FORM_CAPTCHA_V1));
+    /**
+     * Get a list of all Captcha components in the form.
+     *
+     * @param formResource The form resource.
+     * @return The list of all Captcha components in the form.
+     */
+    private List<Resource> getCaptchaComponents(@NotNull final Resource formResource) {
+        return StreamSupport.stream(formStructureHelperFactory
+            .getFormStructureHelper(formResource)
+            .getFormElements(formResource).spliterator(), false)
+            .filter(resource -> resource.isResourceType(FormConstants.RT_CORE_FORM_CAPTCHA_V1))
+            .collect(Collectors.toList());
+    }
 
-        return captchaRequiredByPolicy.get() || captchaRequiredByContent.get();
+    /**
+     * Verify that all Captcha components in the form are valid, or that a Captcha is not required.
+     *
+     * @param request The current request.
+     * @return True if the form should process, false if a captcha has failed or is required but not included.
+     */
+    private boolean validateCaptchas(@NotNull final SlingHttpServletRequest request) {
+        List<Resource> captchas = getCaptchaComponents(request.getResource());
+        if (!captchas.isEmpty()) {
+            return captchas.stream().allMatch(resource -> this.validateCaptcha(request, resource));
+        }
+        return !this.captchaRequiredByPolicy(request);
     }
 
     /**
@@ -197,10 +216,10 @@ public final class CoreFormHandlingServlet extends SlingAllMethodsServlet implem
      * @param request The current request.
      * @return True if the captcha validates, false if it does not.
      */
-    private boolean validateCaptcha(@NotNull final SlingHttpServletRequest request) {
+    private boolean validateCaptcha(@NotNull final SlingHttpServletRequest request, @NotNull final Resource resource) {
         return Optional.of(this.recaptchaValidatorFactory)
-            .flatMap(factory -> factory.getValidator(request.getResource()))
-            .map(val -> val.validate(request.getParameter(RECAPTCHA_TOKEN_PARAMETER)))
+            .flatMap(factory -> factory.getValidator(resource))
+            .map(validator -> validator.validate(request.getParameter(RECAPTCHA_TOKEN_PARAMETER)))
             .orElse(Boolean.FALSE);
     }
 
