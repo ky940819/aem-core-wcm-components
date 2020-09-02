@@ -16,7 +16,10 @@
 package com.adobe.cq.wcm.core.components.services.captcha;
 
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import javax.servlet.http.HttpServletRequest;
 
 /**
  * Captcha validator.
@@ -27,8 +30,16 @@ public interface CaptchaValidator {
      * Determine if the users response validates.
      *
      * @param userResponse The user response.
-     * @return True if it validates, false if it does not validate for any reason.
+     * @return True if the Captcha is valid, false if it does not validate for any reason.
      */
     boolean validate(@Nullable final String userResponse);
+
+    /**
+     * Validate POST request.
+     *
+     * @param request The request.
+     * @return True if the Captcha is valid, false if it does not validate for any reason.
+     */
+    boolean validate(@NotNull final HttpServletRequest request);
 
 }
