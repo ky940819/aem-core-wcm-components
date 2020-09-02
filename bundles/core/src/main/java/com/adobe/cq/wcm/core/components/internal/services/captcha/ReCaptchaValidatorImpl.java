@@ -30,6 +30,7 @@ import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -39,7 +40,7 @@ import java.util.Optional;
 /**
  * Recaptcha validator implementation.
  */
-final class ReCaptchaValidatorImpl implements CaptchaValidator {
+public final class ReCaptchaValidatorImpl implements CaptchaValidator {
 
     /**
      * Default logger.
@@ -50,6 +51,11 @@ final class ReCaptchaValidatorImpl implements CaptchaValidator {
      * Google verify URL.
      */
     private static final String DEFAULT_VERIFY_URL = "https://www.google.com/recaptcha/api/siteverify";
+
+    /**
+     * The name of the request property containing the users reCaptcha challenge response token.
+     */
+    private static final String RECAPTCHA_TOKEN_PARAMETER = "g-recaptcha-response";
 
     /**
      * Duration in MS to wait while attempting to establish a connection.
@@ -89,12 +95,11 @@ final class ReCaptchaValidatorImpl implements CaptchaValidator {
         this.verifyURL = Optional.ofNullable(verifyAddr).filter(StringUtils::isNotEmpty).orElse(DEFAULT_VERIFY_URL);
     }
 
-    /**
-     * Determine if the users response validates.
-     *
-     * @param userResponse The user response.
-     * @return True if it validates, false if it does not validate for any reason.
-     */
+    @Override
+    public boolean validate(@NotNull final HttpServletRequest request) {
+        return this.validate(request.getParameter(RECAPTCHA_TOKEN_PARAMETER));
+    }
+
     @Override
     public boolean validate(@Nullable final String userResponse) {
 
