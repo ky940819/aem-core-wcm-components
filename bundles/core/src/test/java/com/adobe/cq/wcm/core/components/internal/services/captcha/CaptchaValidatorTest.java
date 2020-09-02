@@ -119,8 +119,7 @@ public class CaptchaValidatorTest extends RecaptchaLocalServerTestBase {
         CaptchaValidator validator = validatorFactory.getValidator(currentResource).orElseGet(Assertions::fail);
         assertFalse(validator.validate("invalidResponse"));
         assertFalse(validator.validate(""));
-        String nullString = null;
-        assertFalse(validator.validate(nullString));
+        assertFalse(validator.validate((String) null));
     }
 
     @Test
@@ -164,7 +163,7 @@ public class CaptchaValidatorTest extends RecaptchaLocalServerTestBase {
             when(caConfig.secretKey()).thenReturn(secretKey);
         }
         if (verifyUrl != null) {
-            when(caConfig.verifyURL()).thenReturn(verifyUrl);
+            when(caConfig.verifyURLOverride()).thenReturn(verifyUrl);
         }
         when(builder.as(CaptchaValidatorCaConfig.class)).thenReturn(caConfig);
         context.registerAdapter(Resource.class, ConfigurationBuilder.class, builder);
