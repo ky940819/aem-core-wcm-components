@@ -115,7 +115,8 @@
         }).observe(this.element, {subtree: true, childList: true, characterData: true});
 
         // render the widget
-        this.widgetID = grecaptcha.render(this.captchaContainer, {
+        grecaptcha.render(this.captchaContainer, {
+            isolated: true,
             callback: this._onValidV2Checkbox.bind(this)
         }, true);
     }
@@ -126,9 +127,6 @@
      * @private
      */
     FormCaptcha.prototype._initializeV2Invisible = function() {
-        // render the widget
-        this.widgetID = grecaptcha.render(this.captchaContainer, {}, true);
-
         // handle invisible CAPTCHA on form submit
         this.submitListener = this._v2InvisibleSubmitCallback.bind(this);
         this.protectedForm.addEventListener('submit', this.submitListener, false);
@@ -144,10 +142,15 @@
      */
     FormCaptcha.prototype._v2InvisibleSubmitCallback = function(event) {
         event.preventDefault();
-        grecaptcha.execute(this.widgetID).then((token) => {
-            this.protectedForm.removeEventListener('submit', this.submitListener);
-            this.protectedForm.submit();
-        });
+        // render the widget
+        const widgetID = grecaptcha.render(this.captchaContainer, {
+            isolated: true,
+            callback: () => {
+                this.protectedForm.removeEventListener('submit', this.submitListener);
+                this.protectedForm.submit();
+            }
+        }, true);
+        grecaptcha.execute(widgetID);
         return false;
     }
 
