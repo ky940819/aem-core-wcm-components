@@ -190,9 +190,15 @@
         // load all existing captchas
         const captchas = [].slice.call(document.querySelectorAll(CAPTCHA_COMPONENT_SELECTOR))
             .filter(node => node.querySelector(WIDGET_CONTAINER_SELECTOR))
+
         if (captchas.length > 0) {
-            loadRecaptchaAPI().then(() => captchas.forEach((element) => new FormCaptcha({element: element})));
+            return new Promise((resolve) =>
+                loadRecaptchaAPI()
+                    .then(() => captchas.forEach((element) => new FormCaptcha({element: element})))
+                    .then(resolve)
+            )
         }
+        return Promise.resolve();
     };
 
     /**
