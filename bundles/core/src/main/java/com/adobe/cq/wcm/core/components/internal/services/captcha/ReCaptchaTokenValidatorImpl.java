@@ -15,7 +15,7 @@
  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 package com.adobe.cq.wcm.core.components.internal.services.captcha;
 
-import com.adobe.cq.wcm.core.components.services.captcha.CaptchaValidator;
+import com.adobe.cq.wcm.core.components.services.captcha.CaptchaTokenValidator;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -40,12 +40,12 @@ import java.util.Optional;
 /**
  * Recaptcha validator implementation.
  */
-public final class ReCaptchaValidatorImpl implements CaptchaValidator {
+public final class ReCaptchaTokenValidatorImpl implements CaptchaTokenValidator {
 
     /**
      * Default logger.
      */
-    private static final Logger LOG = LoggerFactory.getLogger(ReCaptchaValidatorImpl.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ReCaptchaTokenValidatorImpl.class);
 
     /**
      * Google verify URL.
@@ -90,7 +90,7 @@ public final class ReCaptchaValidatorImpl implements CaptchaValidator {
      * @param secretKey The secret key.
      * @param verifyAddr The verify URL.
      */
-    ReCaptchaValidatorImpl(@NotNull final String secretKey, @Nullable final String verifyAddr) {
+    ReCaptchaTokenValidatorImpl(@NotNull final String secretKey, @Nullable final String verifyAddr) {
         this.sKey = secretKey;
         this.verifyURL = Optional.ofNullable(verifyAddr).filter(StringUtils::isNotEmpty).orElse(DEFAULT_VERIFY_URL);
     }
@@ -119,7 +119,7 @@ public final class ReCaptchaValidatorImpl implements CaptchaValidator {
         }
 
         // make sure it isn't null or empty
-        try (InputStream responseInputStream = ReCaptchaValidatorImpl.sendVerificationRequest(this.sKey, userResponse, this.verifyURL)){
+        try (InputStream responseInputStream = ReCaptchaTokenValidatorImpl.sendVerificationRequest(this.sKey, userResponse, this.verifyURL)){
             // get the response object
             JsonObject responseObject = new JsonParser().parse(
                 new InputStreamReader(responseInputStream, StandardCharsets.UTF_8)

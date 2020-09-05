@@ -53,7 +53,7 @@ public @interface CaptchaValidatorCaConfig {
                 + "{'value':'recaptcha-v2-checkbox','description':'reCAPTCHA V2 Checkbox'},"
                 + "]"
         })
-    String type();
+    String type() default "";
 
     /**
      * The URL against which to perform validations.

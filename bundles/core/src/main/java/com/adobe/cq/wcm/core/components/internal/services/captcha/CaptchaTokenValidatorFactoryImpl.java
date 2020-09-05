@@ -15,20 +15,32 @@
  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 package com.adobe.cq.wcm.core.components.internal.services.captcha;
 
-import com.adobe.cq.wcm.core.components.services.captcha.CaptchaValidator;
-import com.adobe.cq.wcm.core.components.services.captcha.CaptchaValidatorFactory;
+import com.adobe.cq.wcm.core.components.services.captcha.CaptchaTokenValidator;
+import com.adobe.cq.wcm.core.components.services.captcha.CaptchaTokenValidatorFactory;
+import org.apache.commons.collections.ListUtils;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.caconfig.ConfigurationBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.osgi.service.component.annotations.Component;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 
 /**
  * Recaptcha validator factory service implementation.
  */
-@Component(service = CaptchaValidatorFactory.class, immediate = true)
-public final class CaptchaValidatorFactoryImpl implements CaptchaValidatorFactory {
+@Component(service = CaptchaTokenValidatorFactory.class, immediate = true)
+public final class CaptchaTokenValidatorFactoryImpl implements CaptchaTokenValidatorFactory {
+
+    /**
+     * List of captcha types serviced by this validator factory.
+     */
+    private static final List<String> serviceTypes = Arrays.asList(
+        "recaptcha-v2-checkbox",
+        "recaptcha-v2-invisible"
+    );
 
     /**
      * Get the validator for the given resource.
@@ -38,10 +50,15 @@ public final class CaptchaValidatorFactoryImpl implements CaptchaValidatorFactor
      */
     @NotNull
     @Override
-    public Optional<CaptchaValidator> getValidator(@NotNull final Resource resource) {
+    public Optional<CaptchaTokenValidator> getValidator(@NotNull final Resource resource) {
         return Optional.ofNullable(resource.adaptTo(ConfigurationBuilder.class))
             .map(cb -> cb.as(CaptchaValidatorCaConfig.class))
-            .map(conf -> new ReCaptchaValidatorImpl(conf.secretKey(), conf.verifyURLOverride()));
+            .map(conf -> new ReCaptchaTokenValidatorImpl(conf.secretKey(), conf.verifyURLOverride()));
     }
 
+    @Override
+    @NotNull
+    public List<String> getServiceTypes() {
+        return Collections.unmodifiableList(CaptchaTokenValidatorFactoryImpl.serviceTypes);
+    }
 }

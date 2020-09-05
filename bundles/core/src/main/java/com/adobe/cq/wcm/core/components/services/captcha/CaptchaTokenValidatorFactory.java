@@ -31,6 +31,6 @@ public interface CaptchaValidatorFactory {
      * @param resource The resource for which to get the validator.
      * @return The validator, or empty if no applicable CaConfig could be found.
      */
-    Optional<? extends CaptchaValidator> getValidator(@NotNull final Resource resource);
+    Optional<? extends CaptchaTokenValidator> getValidator(@NotNull final Resource resource);
 
 }
