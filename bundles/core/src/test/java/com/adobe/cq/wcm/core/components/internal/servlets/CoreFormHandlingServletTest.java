@@ -24,6 +24,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import com.adobe.cq.wcm.core.components.internal.form.FormStructureHelperImpl;
+import com.adobe.cq.wcm.core.components.internal.services.captcha.CaptchaValidatorImpl;
 import com.day.cq.wcm.foundation.forms.FormStructureHelper;
 import org.apache.sling.scripting.api.resource.ScriptingResourceResolverProvider;
 import org.jetbrains.annotations.NotNull;
@@ -33,28 +34,31 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
 
 import com.adobe.cq.wcm.core.components.context.CoreComponentTestContext;
 import com.adobe.cq.wcm.core.components.internal.form.FormConstants;
 import com.adobe.cq.wcm.core.components.models.form.Captcha;
-import com.adobe.cq.wcm.core.components.services.captcha.CaptchaValidator;
-import com.adobe.cq.wcm.core.components.services.captcha.CaptchaValidatorFactory;
+import com.adobe.cq.wcm.core.components.services.captcha.CaptchaTokenValidator;
+import com.adobe.cq.wcm.core.components.services.captcha.CaptchaTokenValidatorFactory;
 import com.adobe.cq.wcm.core.components.testing.Utils;
 import com.day.cq.wcm.foundation.forms.FormsHandlingServletHelper;
 import com.day.cq.wcm.foundation.forms.FormStructureHelperFactory;
 import com.day.cq.wcm.foundation.security.SaferSlingPostValidator;
 import io.wcm.testing.mock.aem.junit5.AemContext;
 import io.wcm.testing.mock.aem.junit5.AemContextExtension;
-import org.mockito.junit.jupiter.MockitoExtension;
 
+import static com.adobe.cq.wcm.core.components.internal.services.captcha.CaptchaTokenValidatorTest.enableCaptchaCAConfig;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyZeroInteractions;
 
-@ExtendWith({AemContextExtension.class, MockitoExtension.class})
+@ExtendWith({AemContextExtension.class})
 public class CoreFormHandlingServletTest {
 
     private static final String TEST_BASE = "/form/container";
@@ -69,17 +73,9 @@ public class CoreFormHandlingServletTest {
     private static final String SELECTOR = "form";
     private static final String EXTENSION = "html";
 
-    @Mock
-    FormsHandlingServletHelper formsHandlingServletHelper;
+    private FormsHandlingServletHelper formsHandlingServletHelper;
 
-    @Mock
-    private CaptchaValidatorFactory recaptchaValidatorFactory;
-
-    @Mock
-    private SaferSlingPostValidator saferSlingPostValidator;
-
-    @InjectMocks
-    CoreFormHandlingServlet servlet;
+    private CoreFormHandlingServlet servlet;
 
     public final AemContext context = CoreComponentTestContext.newAemContext();
 
@@ -87,17 +83,18 @@ public class CoreFormHandlingServletTest {
     public void setUp() {
         context.load().json(TEST_BASE + CoreComponentTestContext.TEST_CONTENT_JSON, CONTAINING_PAGE);
 
+        context.registerInjectActivateService(new CaptchaValidatorImpl());
         context.registerService(ScriptingResourceResolverProvider.class, context::resourceResolver);
         FormStructureHelper helper = context.registerInjectActivateService(new FormStructureHelperImpl());
         context.registerService(FormStructureHelperFactory.class, resource -> helper);
-        context.registerService(CaptchaValidatorFactory.class, recaptchaValidatorFactory);
-        context.registerService(SaferSlingPostValidator.class, saferSlingPostValidator);
+        context.registerService(SaferSlingPostValidator.class, mock(SaferSlingPostValidator.class));
 
         this.servlet = this.context.registerInjectActivateService(new CoreFormHandlingServlet(), new HashMap<String, Object>() {{
             put("name_whitelist", NAME_WHITELIST);
             put("allow_expressions", ALLOW_EXPRESSIONS);
         }});
 
+        this.formsHandlingServletHelper = mock(FormsHandlingServletHelper.class);
         Utils.setInternalState(servlet, "formsHandlingServletHelper", formsHandlingServletHelper);
     }
 
@@ -114,17 +111,17 @@ public class CoreFormHandlingServletTest {
     @Nested
     class CaptchaRequired {
 
-        CaptchaValidator validator;
+        CaptchaTokenValidator validator;
 
         @BeforeEach
         public void setUp() {
-            this.validator = spy(new MockValidator());
+            this.validator = spy(new MockTokenValidator());
         }
 
         @Test
         @DisplayName("Captcha required as per component properties, invalid token provided")
         public void testDoPost_captchaRequired_invalid() throws Exception {
-            doReturn(Optional.of(this.validator)).when(recaptchaValidatorFactory).getValidator(any());
+            enableCaptcha();
             context.currentResource(context.resourceResolver().getResource(FORM4_PATH));
             servlet.doPost(context.request(), context.response());
 
@@ -136,7 +133,7 @@ public class CoreFormHandlingServletTest {
         @Test
         @DisplayName("Captcha required as per component properties, valid token provided")
         public void testDoPost_captchaRequired_valid() throws Exception {
-            doReturn(Optional.of(this.validator)).when(recaptchaValidatorFactory).getValidator(any());
+            enableCaptcha();
             context.request().setParameterMap(Collections.singletonMap(RECAPTCHA_TOKEN_PARAMETER, "valid_response"));
 
             context.currentResource(context.resourceResolver().getResource(FORM4_PATH));
@@ -167,7 +164,7 @@ public class CoreFormHandlingServletTest {
         @Test
         @DisplayName("Captcha required as per policy, valid token provided")
         public void testDoPost_captchaRequired_by_policy_valid() throws Exception {
-            doReturn(Optional.of(this.validator)).when(recaptchaValidatorFactory).getValidator(any());
+            enableCaptcha();
             context.contentPolicyMapping(FormConstants.RT_CORE_FORM_CONTAINER_V2, new HashMap<String, Object>() {{
                 put(Captcha.PN_CAPTCHA_REQUIRED, Boolean.TRUE);
             }});
@@ -181,6 +178,14 @@ public class CoreFormHandlingServletTest {
             verify(formsHandlingServletHelper).doPost(context.request(), context.response());
             verify(validator).validate(eq("valid_response"));
         }
+
+        private void enableCaptcha() {
+            CaptchaTokenValidatorFactory captchaTokenValidatorFactory = mock(CaptchaTokenValidatorFactory.class);
+            doReturn(Collections.singletonList("CAPTCHA_TYPE")).when(captchaTokenValidatorFactory).getServiceTypes();
+            context.registerService(CaptchaTokenValidatorFactory.class, captchaTokenValidatorFactory);
+            enableCaptchaCAConfig(context, null, null, "CAPTCHA_TYPE", null);
+            doReturn(Optional.of(this.validator)).when(captchaTokenValidatorFactory).getValidator(any());
+        }
     }
 
     @Test
@@ -192,8 +197,7 @@ public class CoreFormHandlingServletTest {
         verify(formsHandlingServletHelper).handleFilter(context.request(), context.response(), filterChain, EXTENSION, SELECTOR);
     }
 
-
-    static final class MockValidator implements CaptchaValidator {
+    static final class MockTokenValidator implements CaptchaTokenValidator {
 
         @Override
         public boolean validate(@Nullable String userResponse) {
