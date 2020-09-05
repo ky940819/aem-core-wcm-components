@@ -17,8 +17,8 @@ package com.adobe.cq.wcm.core.components.internal.services.captcha;
 
 
 import com.adobe.cq.wcm.core.components.context.CoreComponentTestContext;
-import com.adobe.cq.wcm.core.components.services.captcha.CaptchaValidator;
-import com.adobe.cq.wcm.core.components.services.captcha.CaptchaValidatorFactory;
+import com.adobe.cq.wcm.core.components.services.captcha.CaptchaTokenValidator;
+import com.adobe.cq.wcm.core.components.services.captcha.CaptchaTokenValidatorFactory;
 import io.wcm.testing.mock.aem.junit5.AemContext;
 import io.wcm.testing.mock.aem.junit5.AemContextExtension;
 import org.apache.sling.api.resource.Resource;
@@ -45,7 +45,7 @@ import static org.mockito.Mockito.when;
  * Recaptcha service unit tests.
  */
 @ExtendWith({AemContextExtension.class})
-public class CaptchaValidatorTest extends RecaptchaLocalServerTestBase {
+public class CaptchaTokenValidatorTest extends RecaptchaLocalServerTestBase {
 
     private static final String TEST_BASE = "/form/container";
     private static final String CONTAINING_PAGE = "/content/coretest/demo-page";
@@ -59,7 +59,7 @@ public class CaptchaValidatorTest extends RecaptchaLocalServerTestBase {
     /**
      * The recaptcha service.
      */
-    private CaptchaValidatorFactory validatorFactory;
+    private CaptchaTokenValidatorFactory validatorFactory;
 
     /**
      * The public key.
@@ -81,7 +81,7 @@ public class CaptchaValidatorTest extends RecaptchaLocalServerTestBase {
         super.setUp();
         this.context.load().json(TEST_BASE + CoreComponentTestContext.TEST_CONTENT_JSON, CONTAINING_PAGE);
         this.currentResource = Objects.requireNonNull(context.resourceResolver().getResource(FORM4_PATH));
-        this.validatorFactory = this.context.registerInjectActivateService(new CaptchaValidatorFactoryImpl());
+        this.validatorFactory = this.context.registerInjectActivateService(new CaptchaTokenValidatorFactoryImpl());
     }
 
     @AfterEach
@@ -108,7 +108,7 @@ public class CaptchaValidatorTest extends RecaptchaLocalServerTestBase {
     @DisplayName("validate() - valid user response")
     void validate_valid() {
         enableCaptchaCAConfig(context, SITE_KEY, SECRET_KEY, "type", httpHost.toURI() + "/recaptcha/api/siteverify");
-        CaptchaValidator validator = validatorFactory.getValidator(currentResource).orElseGet(Assertions::fail);
+        CaptchaTokenValidator validator = validatorFactory.getValidator(currentResource).orElseGet(Assertions::fail);
         assertTrue(validator.validate("validResponse"));
     }
 
@@ -116,7 +116,7 @@ public class CaptchaValidatorTest extends RecaptchaLocalServerTestBase {
     @DisplayName("validate() - invalid user response")
     void validate_invalid() {
         enableCaptchaCAConfig(context, SITE_KEY, SECRET_KEY, "type", httpHost.toURI() + "/recaptcha/api/siteverify");
-        CaptchaValidator validator = validatorFactory.getValidator(currentResource).orElseGet(Assertions::fail);
+        CaptchaTokenValidator validator = validatorFactory.getValidator(currentResource).orElseGet(Assertions::fail);
         assertFalse(validator.validate("invalidResponse"));
         assertFalse(validator.validate(""));
         assertFalse(validator.validate((String) null));
@@ -126,7 +126,7 @@ public class CaptchaValidatorTest extends RecaptchaLocalServerTestBase {
     @DisplayName("validate() - no secret key")
     void validate_empty_key() {
         enableCaptchaCAConfig(context, SITE_KEY, "", "type", httpHost.toURI() + "/recaptcha/api/siteverify");
-        CaptchaValidator validator = validatorFactory.getValidator(currentResource).orElseGet(Assertions::fail);
+        CaptchaTokenValidator validator = validatorFactory.getValidator(currentResource).orElseGet(Assertions::fail);
         assertFalse(validator.validate("validResponse"));
     }
 
@@ -134,7 +134,7 @@ public class CaptchaValidatorTest extends RecaptchaLocalServerTestBase {
     @DisplayName("validate() - bad response from validation endpoint")
     void validate_invalid_verify_url() {
         enableCaptchaCAConfig(context, SITE_KEY, SECRET_KEY, "type",httpHost.toURI() + "/garbage");
-        CaptchaValidator validator = validatorFactory.getValidator(currentResource).orElseGet(Assertions::fail);
+        CaptchaTokenValidator validator = validatorFactory.getValidator(currentResource).orElseGet(Assertions::fail);
         assertFalse(validator.validate("validResponse"));
     }
 
@@ -142,7 +142,7 @@ public class CaptchaValidatorTest extends RecaptchaLocalServerTestBase {
     @DisplayName("validate() - IOException sending request to validation endpoint")
     void validate_io_exception() {
         enableCaptchaCAConfig(context, SITE_KEY, SECRET_KEY, "type","nope");
-        CaptchaValidator validator = validatorFactory.getValidator(currentResource).orElseGet(Assertions::fail);
+        CaptchaTokenValidator validator = validatorFactory.getValidator(currentResource).orElseGet(Assertions::fail);
         assertFalse(validator.validate("validResponse"));
     }
 
