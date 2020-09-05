@@ -22,9 +22,9 @@ import org.jetbrains.annotations.Nullable;
 import javax.servlet.http.HttpServletRequest;
 
 /**
- * Captcha validator.
+ * Captcha token validator.
  */
-public interface CaptchaValidator {
+public interface CaptchaTokenValidator {
 
     /**
      * Determine if the users response validates.

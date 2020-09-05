@@ -18,12 +18,13 @@ package com.adobe.cq.wcm.core.components.services.captcha;
 import org.apache.sling.api.resource.Resource;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
- * Recaptcha validator factory.
+ * Captcha token validator factory service interface.
  */
-public interface CaptchaValidatorFactory {
+public interface CaptchaTokenValidatorFactory {
 
     /**
      * Get the validator for the given resource.
@@ -31,6 +32,14 @@ public interface CaptchaValidatorFactory {
      * @param resource The resource for which to get the validator.
      * @return The validator, or empty if no applicable CaConfig could be found.
      */
+    @NotNull
     Optional<? extends CaptchaTokenValidator> getValidator(@NotNull final Resource resource);
 
+    /**
+     * Get the list of captcha types that this token validator services.
+     *
+     * @return The list of captcha types serviceable by this validator.
+     */
+    @NotNull
+    List<String> getServiceTypes();
 }
