@@ -30,7 +30,7 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletResponse;
 
 import com.adobe.cq.wcm.core.components.models.form.Captcha;
-import com.adobe.cq.wcm.core.components.services.captcha.CaptchaValidatorFactory;
+import com.adobe.cq.wcm.core.components.services.captcha.CaptchaValidator;
 import com.day.cq.wcm.api.policies.ContentPolicy;
 import com.day.cq.wcm.api.policies.ContentPolicyManager;
 import org.apache.sling.api.SlingHttpServletRequest;
@@ -130,10 +130,10 @@ public final class CoreFormHandlingServlet extends SlingAllMethodsServlet implem
     private transient FormStructureHelperFactory formStructureHelperFactory;
 
     /**
-     * Recaptcha validator factory service.
+     * Captcha validator service.
      */
     @Reference
-    private transient CaptchaValidatorFactory recaptchaValidatorFactory;
+    private transient CaptchaValidator captchaValidator;
 
     /**
      * Activate the service.
@@ -212,8 +212,8 @@ public final class CoreFormHandlingServlet extends SlingAllMethodsServlet implem
      * @return True if the captcha validates, false if it does not.
      */
     private boolean validateCaptcha(@NotNull final SlingHttpServletRequest request, @NotNull final Resource resource) {
-        return Optional.of(this.recaptchaValidatorFactory)
-            .flatMap(factory -> factory.getValidator(resource))
+        return Optional.of(this.captchaValidator)
+            .flatMap(captchaValidator -> captchaValidator.getValidator(resource))
             .map(validator -> validator.validate(request))
             .orElse(Boolean.FALSE);
     }
