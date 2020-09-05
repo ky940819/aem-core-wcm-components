@@ -17,7 +17,7 @@ package com.adobe.cq.wcm.core.components.internal.models.v1.form;
 
 import com.adobe.cq.wcm.core.components.Utils;
 import com.adobe.cq.wcm.core.components.context.CoreComponentTestContext;
-import com.adobe.cq.wcm.core.components.internal.services.captcha.CaptchaValidatorTest;
+import com.adobe.cq.wcm.core.components.internal.services.captcha.CaptchaTokenValidatorTest;
 import com.adobe.cq.wcm.core.components.models.form.Captcha;
 import io.wcm.testing.mock.aem.junit5.AemContext;
 import io.wcm.testing.mock.aem.junit5.AemContextExtension;
@@ -57,7 +57,7 @@ public class CaptchaImplTest {
 
     @Test
     public void testGetSiteKey() {
-        CaptchaValidatorTest.enableCaptchaCAConfig(this.context, SITE_KEY, SECRET_KEY, TYPE, "");
+        CaptchaTokenValidatorTest.enableCaptchaCAConfig(this.context, SITE_KEY, SECRET_KEY, TYPE, "");
         Captcha captcha = getCaptchaUnderTest(CAPTCHA_1);
         assertEquals(SITE_KEY, captcha.getSiteKey());
         assertSame(captcha.getSiteKey(), captcha.getSiteKey());
@@ -71,7 +71,7 @@ public class CaptchaImplTest {
 
     @Test
     public void testGetType() {
-        CaptchaValidatorTest.enableCaptchaCAConfig(this.context, SITE_KEY, SECRET_KEY, TYPE, "");
+        CaptchaTokenValidatorTest.enableCaptchaCAConfig(this.context, SITE_KEY, SECRET_KEY, TYPE, "");
         Captcha captcha = getCaptchaUnderTest(CAPTCHA_1);
         assertEquals(TYPE, captcha.getType());
         assertSame(captcha.getType(), captcha.getType());
@@ -92,7 +92,7 @@ public class CaptchaImplTest {
 
     @Test
     public void testComponentExporter() {
-        CaptchaValidatorTest.enableCaptchaCAConfig(this.context, SITE_KEY, SECRET_KEY, TYPE, "");
+        CaptchaTokenValidatorTest.enableCaptchaCAConfig(this.context, SITE_KEY, SECRET_KEY, TYPE, "");
         Captcha captcha = getCaptchaUnderTest(CAPTCHA_1);
         Utils.testJSONExport(captcha, Utils.getTestExporterJSONPath(TEST_BASE, "captcha"));
     }
