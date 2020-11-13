@@ -27,6 +27,7 @@ import com.day.cq.wcm.api.components.Component;
 /**
  * Panel container item implementation.
  */
+@Deprecated
 public class PanelContainerListItemImpl extends ResourceListItemImpl implements ListItem {
 
     /**
@@ -40,6 +41,7 @@ public class PanelContainerListItemImpl extends ResourceListItemImpl implements 
      * @param resource The resource.
      * @param parentId The ID of the containing component.
      */
+    @Deprecated
     public PanelContainerListItemImpl(@NotNull final Resource resource, final String parentId, Component component) {
         super(resource, parentId, component);
         title = Optional.ofNullable(resource.getValueMap().get(PN_PANEL_TITLE, String.class))
