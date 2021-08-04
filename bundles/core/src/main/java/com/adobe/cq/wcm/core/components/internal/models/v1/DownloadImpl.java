@@ -43,7 +43,7 @@ import org.jetbrains.annotations.NotNull;
 import com.adobe.cq.export.json.ComponentExporter;
 import com.adobe.cq.export.json.ExporterConstants;
 import com.adobe.cq.wcm.core.components.commons.link.Link;
-import com.adobe.cq.wcm.core.components.internal.link.LinkHandler;
+import com.adobe.cq.wcm.core.components.commons.link.LinkHandler;
 import com.adobe.cq.wcm.core.components.internal.servlets.DownloadServlet;
 import com.adobe.cq.wcm.core.components.models.Download;
 import com.day.cq.commons.DownloadResource;
@@ -245,16 +245,19 @@ public class DownloadImpl extends AbstractComponentImpl implements Download {
     }
 
     @Override
+    @Nullable
     public String getTitle() {
         return title;
     }
 
     @Override
+    @Nullable
     public String getDescription() {
         return description;
     }
 
     @Override
+    @Nullable
     public String getActionText() {
         return actionText;
     }

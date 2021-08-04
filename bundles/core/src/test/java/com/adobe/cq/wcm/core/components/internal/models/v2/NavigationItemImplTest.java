@@ -20,7 +20,7 @@ import java.util.Collections;
 import org.apache.sling.api.resource.ValueMap;
 import org.junit.jupiter.api.Test;
 
-import com.adobe.cq.wcm.core.components.internal.link.LinkHandler;
+import com.adobe.cq.wcm.core.components.commons.link.LinkHandler;
 import com.day.cq.wcm.api.Page;
 import com.day.cq.wcm.api.components.Component;
 

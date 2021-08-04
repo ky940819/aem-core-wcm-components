@@ -53,7 +53,7 @@ import org.slf4j.LoggerFactory;
 import com.adobe.cq.export.json.ComponentExporter;
 import com.adobe.cq.export.json.ExporterConstants;
 import com.adobe.cq.wcm.core.components.commons.link.Link;
-import com.adobe.cq.wcm.core.components.internal.link.LinkHandler;
+import com.adobe.cq.wcm.core.components.commons.link.LinkHandler;
 import com.adobe.cq.wcm.core.components.internal.servlets.AdaptiveImageServlet;
 import com.adobe.cq.wcm.core.components.models.Image;
 import com.adobe.cq.wcm.core.components.models.datalayer.ImageData;
@@ -116,7 +116,11 @@ public class ImageImpl extends AbstractComponentImpl implements Image {
 
     @Self
     protected LinkHandler linkHandler;
-    protected Optional<Link> link;
+
+    /**
+     * The link.
+     */
+    protected Optional<Link<@Nullable Page>> link;
 
     protected String src;
     protected String[] smartImages = new String[]{};
@@ -319,11 +323,13 @@ public class ImageImpl extends AbstractComponentImpl implements Image {
         return displayPopupTitle;
     }
 
+    @Nullable
     @Override
     public String getAlt() {
         return alt;
     }
 
+    @Nullable
     @Override
     public String getTitle() {
         return title;
@@ -331,9 +337,10 @@ public class ImageImpl extends AbstractComponentImpl implements Image {
 
     @Override
     public String getLink() {
-        return link == null ? null : link.map(Link::getURL).orElse(null);
+        return Optional.ofNullable(this.link).flatMap((o) -> o).map(Link::getURL).orElse(null);
     }
 
+    @Nullable
     @Override
     @JsonIgnore
     public String getFileReference() {

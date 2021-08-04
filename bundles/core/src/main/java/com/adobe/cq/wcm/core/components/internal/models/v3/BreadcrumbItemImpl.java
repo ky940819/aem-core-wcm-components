@@ -22,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import com.adobe.cq.wcm.core.components.commons.link.Link;
-import com.adobe.cq.wcm.core.components.internal.link.LinkHandler;
+import com.adobe.cq.wcm.core.components.commons.link.LinkHandler;
 import com.adobe.cq.wcm.core.components.internal.models.v2.NavigationItemImpl;
 import com.adobe.cq.wcm.core.components.models.NavigationItem;
 import com.day.cq.wcm.api.Page;
@@ -43,7 +43,7 @@ public class BreadcrumbItemImpl extends NavigationItemImpl implements Navigation
     @Override
     @JsonIgnore(false)
     @Nullable
-    public Link getLink() {
+    public Link<Page> getLink() {
         return super.getLink();
     }
 }

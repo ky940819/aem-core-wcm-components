@@ -34,11 +34,12 @@ import org.jetbrains.annotations.Nullable;
 import com.adobe.cq.export.json.ComponentExporter;
 import com.adobe.cq.export.json.ExporterConstants;
 import com.adobe.cq.wcm.core.components.commons.link.Link;
-import com.adobe.cq.wcm.core.components.internal.link.LinkHandler;
+import com.adobe.cq.wcm.core.components.commons.link.LinkHandler;
 import com.adobe.cq.wcm.core.components.models.Button;
 import com.adobe.cq.wcm.core.components.models.datalayer.ComponentData;
 import com.adobe.cq.wcm.core.components.models.datalayer.builder.DataLayerBuilder;
 import com.day.cq.commons.jcr.JcrConstants;
+import com.day.cq.wcm.api.Page;
 import com.day.cq.wcm.api.PageManager;
 
 @Model(
@@ -78,7 +79,11 @@ public class ButtonImpl extends AbstractComponentImpl implements Button {
 
     @Self
     private LinkHandler linkHandler;
-    protected Optional<Link> link;
+
+    /**
+     * The link.
+     */
+    protected Optional<Link<@Nullable Page>> link;
 
     @PostConstruct
     private void initModel() {

@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Optional;
 
 import javax.annotation.PostConstruct;
 
@@ -33,7 +34,7 @@ import org.jetbrains.annotations.NotNull;
 
 import com.adobe.cq.export.json.ComponentExporter;
 import com.adobe.cq.export.json.ExporterConstants;
-import com.adobe.cq.wcm.core.components.internal.link.LinkHandler;
+import com.adobe.cq.wcm.core.components.commons.link.LinkHandler;
 import com.adobe.cq.wcm.core.components.models.LanguageNavigation;
 import com.adobe.cq.wcm.core.components.models.LanguageNavigationItem;
 import com.adobe.cq.wcm.core.components.models.NavigationItem;
@@ -74,14 +75,14 @@ public class LanguageNavigationImpl extends AbstractComponentImpl implements Lan
 
     private String navigationRoot;
     private int structureDepth;
-    private Page rootPage;
     private boolean isShadowingDisabled;
     private List<NavigationItem> items;
     private int startLevel;
 
     @PostConstruct
     private void initModel() {
-        navigationRoot = properties.get(PN_NAVIGATION_ROOT, currentStyle.get(PN_NAVIGATION_ROOT, String.class));
+        navigationRoot = Optional.ofNullable(properties.get(PN_NAVIGATION_ROOT, String.class))
+            .orElseGet(() -> currentStyle.get(PN_NAVIGATION_ROOT, String.class));
         structureDepth = properties.get(PN_STRUCTURE_DEPTH, currentStyle.get(PN_STRUCTURE_DEPTH, 1));
         isShadowingDisabled = properties.get(PageListItemImpl.PN_DISABLE_SHADOWING,
                 currentStyle.get(PageListItemImpl.PN_DISABLE_SHADOWING, PageListItemImpl.PROP_DISABLE_SHADOWING_DEFAULT));
@@ -91,7 +92,7 @@ public class LanguageNavigationImpl extends AbstractComponentImpl implements Lan
     public List<NavigationItem> getItems() {
         if (items == null) {
             PageManager pageManager = currentPage.getPageManager();
-            rootPage = pageManager.getPage(navigationRoot);
+            Page rootPage = pageManager.getPage(navigationRoot);
             if (rootPage != null) {
                 int rootPageLevel = rootPage.getDepth();
                 startLevel = rootPageLevel + 1;

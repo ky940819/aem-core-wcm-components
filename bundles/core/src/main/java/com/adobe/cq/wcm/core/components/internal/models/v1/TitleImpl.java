@@ -35,8 +35,8 @@ import org.jetbrains.annotations.Nullable;
 import com.adobe.cq.export.json.ComponentExporter;
 import com.adobe.cq.export.json.ExporterConstants;
 import com.adobe.cq.wcm.core.components.commons.link.Link;
+import com.adobe.cq.wcm.core.components.commons.link.LinkHandler;
 import com.adobe.cq.wcm.core.components.internal.Heading;
-import com.adobe.cq.wcm.core.components.internal.link.LinkHandler;
 import com.adobe.cq.wcm.core.components.models.Title;
 import com.adobe.cq.wcm.core.components.models.datalayer.ComponentData;
 import com.adobe.cq.wcm.core.components.models.datalayer.builder.DataLayerBuilder;
@@ -84,7 +84,8 @@ public class TitleImpl extends AbstractComponentImpl implements Title {
 
     @Self
     private LinkHandler linkHandler;
-    protected Optional<Link> link;
+
+    protected Optional<Link<@Nullable Page>> link;
 
     /**
      * The {@link com.adobe.cq.wcm.core.components.internal.Heading} object for the type of this title.
@@ -131,7 +132,7 @@ public class TitleImpl extends AbstractComponentImpl implements Title {
     }
 
     @Override
-    public Link getLink() {
+    public Link<@Nullable Page> getLink() {
         return link.orElse(null);
     }
 

@@ -19,7 +19,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -43,8 +42,8 @@ import org.jetbrains.annotations.Nullable;
 import com.adobe.cq.export.json.ComponentExporter;
 import com.adobe.cq.export.json.ExporterConstants;
 import com.adobe.cq.wcm.core.components.commons.link.Link;
+import com.adobe.cq.wcm.core.components.commons.link.LinkHandler;
 import com.adobe.cq.wcm.core.components.internal.Heading;
-import com.adobe.cq.wcm.core.components.internal.link.LinkHandler;
 import com.adobe.cq.wcm.core.components.models.Image;
 import com.adobe.cq.wcm.core.components.models.ListItem;
 import com.adobe.cq.wcm.core.components.models.Teaser;
@@ -202,7 +201,7 @@ public class TeaserImpl extends AbstractImageDelegatingModel implements Teaser {
 
     @Self
     private LinkHandler linkHandler;
-    protected Optional<Link<Page>> link;
+    protected Optional<Link<@Nullable Page>> link;
 
     /**
      * Initialize the model.
@@ -231,16 +230,15 @@ public class TeaserImpl extends AbstractImageDelegatingModel implements Teaser {
         }
         // use the target page as the link if it exists
         link = this.getTargetPage()
-                .map(page -> Optional.of(linkHandler.getLink(page).orElse(null)))
+                .map(page -> linkHandler.getLink(page))
                 .orElseGet(() -> {
                     // target page doesn't exist
                     if (this.isActionsEnabled()) {
                         return this.getActions().stream().findFirst()
-                                .map(action -> Optional.ofNullable(linkHandler.getLink(action.getURL(), null).orElse(null)))
-                                .orElse(Optional.empty());
+                            .flatMap(action -> linkHandler.getLink(action.getURL(), null));
                     } else {
                         // use the property value if actions are not enabled
-                        return Optional.ofNullable(linkHandler.getLink(resource, Link.PN_LINK_URL).orElse(null));
+                        return linkHandler.getLink(resource, Link.PN_LINK_URL);
                     }
                 });
     }
@@ -437,7 +435,7 @@ public class TeaserImpl extends AbstractImageDelegatingModel implements Teaser {
         /**
          * The CTA link.
          */
-        protected final Optional<Link<Page>> ctaLink;
+        protected final Optional<Link<@Nullable Page>> ctaLink;
 
         /**
          * The ID of the teaser that contains this action.
@@ -461,7 +459,7 @@ public class TeaserImpl extends AbstractImageDelegatingModel implements Teaser {
             ctaResource = actionRes;
             ValueMap ctaProperties = actionRes.getValueMap();
             ctaTitle = ctaProperties.get(PN_ACTION_TEXT, String.class);
-            ctaLink = Optional.ofNullable(linkHandler.getLink(actionRes, PN_ACTION_LINK).orElse(null));
+            ctaLink = linkHandler.getLink(actionRes, PN_ACTION_LINK);
             if (component != null) {
                 this.dataLayerType = component.getResourceType() + "/" + CTA_ID_PREFIX;
             }
@@ -470,7 +468,7 @@ public class TeaserImpl extends AbstractImageDelegatingModel implements Teaser {
         @Override
         @JsonIgnore
         @Nullable
-        public Link getLink() {
+        public Link<?> getLink() {
             return ctaLink.orElse(null);
         }
 
@@ -481,7 +479,7 @@ public class TeaserImpl extends AbstractImageDelegatingModel implements Teaser {
          */
         @NotNull
         protected Optional<Page> getCtaPage() {
-            return Optional.ofNullable(ctaLink.map(Link::getReference).orElse(null));
+            return ctaLink.map(Link::getReference);
         }
 
         @Nullable
@@ -509,6 +507,7 @@ public class TeaserImpl extends AbstractImageDelegatingModel implements Teaser {
             return ctaLink.map(Link::getURL).orElse(null);
         }
 
+        @NotNull
         @Override
         public String getId() {
             if (ctaId == null) {

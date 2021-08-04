@@ -21,34 +21,40 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
+import com.day.cq.wcm.api.PageManager;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ValueMap;
 import org.apache.sling.models.annotations.Model;
-import org.apache.sling.models.annotations.injectorspecific.OSGiService;
-import org.apache.sling.models.annotations.injectorspecific.ScriptVariable;
-import org.apache.sling.models.annotations.injectorspecific.Self;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import com.adobe.cq.wcm.core.components.commons.link.Link;
+import com.adobe.cq.wcm.core.components.commons.link.LinkHandler;
 import com.adobe.cq.wcm.core.components.services.link.PathProcessor;
 import com.day.cq.wcm.api.Page;
-import com.day.cq.wcm.api.PageManager;
 import com.google.common.collect.ImmutableSet;
 
-import static com.adobe.cq.wcm.core.components.commons.link.Link.*;
-import static com.adobe.cq.wcm.core.components.internal.link.LinkImpl.*;
+import javax.inject.Inject;
+import javax.inject.Named;
+
+import static com.adobe.cq.wcm.core.components.commons.link.Link.PN_LINK_ACCESSIBILITY_LABEL;
+import static com.adobe.cq.wcm.core.components.commons.link.Link.PN_LINK_TARGET;
+import static com.adobe.cq.wcm.core.components.commons.link.Link.PN_LINK_TITLE_ATTRIBUTE;
+import static com.adobe.cq.wcm.core.components.commons.link.Link.PN_LINK_URL;
+import static com.adobe.cq.wcm.core.components.internal.link.LinkImpl.ATTR_ARIA_LABEL;
+import static com.adobe.cq.wcm.core.components.internal.link.LinkImpl.ATTR_TARGET;
+import static com.adobe.cq.wcm.core.components.internal.link.LinkImpl.ATTR_TITLE;
 
 /**
  * Simple implementation for resolving and validating links from model's resources.
  * This is a Sling model that can be injected into other models using the <code>@Self</code> annotation.
  */
-@Model(adaptables = SlingHttpServletRequest.class)
-public class LinkHandler {
-
-    public static final String HTML_EXTENSION = ".html";
+@Model(adaptables = SlingHttpServletRequest.class,
+    adapters = {LinkHandler.class}
+)
+public final class LinkHandlerImpl implements LinkHandler {
 
     /**
      * List of allowed/supported values for link target.
@@ -60,28 +66,30 @@ public class LinkHandler {
     /**
      * The current {@link SlingHttpServletRequest}.
      */
-    @Self
-    private SlingHttpServletRequest request;
+    @NotNull
+    private final SlingHttpServletRequest request;
 
     /**
-     * Reference to {@link PageManager}
+     * Registered path processors.
      */
-    @ScriptVariable
-    @org.apache.sling.models.annotations.Optional
-    private PageManager pageManager;
+    @NotNull
+    private final List<PathProcessor> pathProcessors;
 
-    @OSGiService
-    private List<PathProcessor> pathProcessors;
+    @Inject
+    public LinkHandlerImpl(@Named("sling-object") @NotNull final SlingHttpServletRequest request,
+                           @Named("osgi-services") @NotNull final List<PathProcessor> pathProcessorList) {
+        this.request = request;
+        this.pathProcessors = pathProcessorList;
+    }
 
     /**
      * Resolves a link from the properties of the given resource.
      *
      * @param resource Resource
-     * @return {@link Optional} of  {@link Link}
+     * @return {@link Optional} of {@link Link}
      */
     @NotNull
-    @SuppressWarnings("rawtypes")
-    public Optional<Link> getLink(@NotNull Resource resource) {
+    public Optional<Link<@Nullable Page>> getLink(@NotNull final Resource resource) {
         return getLink(resource, PN_LINK_URL);
     }
 
@@ -90,11 +98,11 @@ public class LinkHandler {
      *
      * @param resource            Resource
      * @param linkURLPropertyName Property name to read link URL from.
-     * @return {@link Optional} of  {@link Link}
+     * @return {@link Optional} of {@link Link}
      */
     @NotNull
-    @SuppressWarnings("rawtypes")
-    public Optional<Link> getLink(@NotNull Resource resource, String linkURLPropertyName) {
+    public Optional<Link<@Nullable Page>> getLink(@NotNull final Resource resource,
+                                                  @NotNull final String linkURLPropertyName) {
         ValueMap props = resource.getValueMap();
         String linkURL = props.get(linkURLPropertyName, String.class);
         if (linkURL == null) {
@@ -103,22 +111,19 @@ public class LinkHandler {
         String linkTarget = props.get(PN_LINK_TARGET, String.class);
         String linkAccessibilityLabel = props.get(PN_LINK_ACCESSIBILITY_LABEL, String.class);
         String linkTitleAttribute = props.get(PN_LINK_TITLE_ATTRIBUTE, String.class);
-        return Optional.ofNullable(getLink(linkURL, linkTarget, linkAccessibilityLabel, linkTitleAttribute).orElse(null));
+        return getLink(linkURL, linkTarget, linkAccessibilityLabel, linkTitleAttribute);
     }
 
     /**
      * Builds a link pointing to the given target page.
      * @param page Target page
      *
-     * @return {@link Optional} of  {@link Link<Page>}
+     * @return {@link Optional} of {@link Link<Page>}
      */
     @NotNull
-    public Optional<Link<Page>> getLink(@Nullable Page page) {
-        if (page == null) {
-            return Optional.empty();
-        }
-        String linkURL = getPageLinkURL(page);
-        return buildLink(linkURL, request, page, null);
+    public Optional<Link<@NotNull Page>> getLink(@Nullable final Page page) {
+        return Optional.ofNullable(page)
+            .flatMap(p -> buildLink(getPageLinkURL(page), request, page, null));
     }
 
     /**
@@ -126,10 +131,10 @@ public class LinkHandler {
      * @param linkURL Link URL
      * @param target Target
      *
-     * @return {@link Optional} of  {@link Link<Page>}
+     * @return {@link Optional} of {@link Link<Page>}
      */
     @NotNull
-    public Optional<Link<Page>> getLink(@Nullable String linkURL, @Nullable String target) {
+    public Optional<Link<@Nullable Page>> getLink(@Nullable final String linkURL, @Nullable final String target) {
         String resolvedLinkURL = validateAndResolveLinkURL(linkURL);
         String resolvedLinkTarget = validateAndResolveLinkTarget(target);
         Page targetPage = getPage(linkURL).orElse(null);
@@ -144,10 +149,13 @@ public class LinkHandler {
      * @param linkAccessibilityLabel Link Accessibility Label
      * @param linkTitleAttribute Link Title Attribute
      *
-     * @return {@link Optional} of  {@link Link<Page>}
+     * @return {@link Optional} of {@link Link<Page>}
      */
     @NotNull
-    public Optional<Link<Page>> getLink(@Nullable String linkURL, @Nullable String target, @Nullable String linkAccessibilityLabel, @Nullable String linkTitleAttribute) {
+    public Optional<Link<@Nullable Page>> getLink(@Nullable final String linkURL,
+                                                  @Nullable final String target,
+                                                  @Nullable final String linkAccessibilityLabel,
+                                                  @Nullable final String linkTitleAttribute) {
         String resolvedLinkURL = validateAndResolveLinkURL(linkURL);
         String resolvedLinkTarget = validateAndResolveLinkTarget(target);
         String validatedLinkAccessibilityLabel = validateLinkAccessibilityLabel(linkAccessibilityLabel);
@@ -162,13 +170,21 @@ public class LinkHandler {
                 .orElse(null);
     }
 
-    private Optional<Link<Page>> buildLink(String path, SlingHttpServletRequest request, Page page,
-                                           Map<String, String> htmlAttributes) {
+    @NotNull
+    private Optional<Link<@Nullable Page>> buildLink(@Nullable final String path,
+                                                     @NotNull final SlingHttpServletRequest request,
+                                                     @Nullable final Page page,
+                                                     @Nullable final Map<String, String> htmlAttributes) {
         if (StringUtils.isNotEmpty(path)) {
             return pathProcessors.stream()
-                    .filter(pathProcessor -> pathProcessor.accepts(path, request))
-                    .findFirst().map(pathProcessor -> new LinkImpl<>(pathProcessor.sanitize(path, request), pathProcessor.map(path,
-                            request), pathProcessor.externalize(path, request), page, pathProcessor.processHtmlAttributes(path, htmlAttributes)));
+                .filter(pathProcessor -> pathProcessor.accepts(path, request))
+                .findFirst().map(pathProcessor -> new LinkImpl<>(
+                    pathProcessor.sanitize(path, request),
+                    pathProcessor.map(path, request),
+                    pathProcessor.externalize(path, request),
+                    page,
+                    pathProcessor.processHtmlAttributes(path, htmlAttributes)
+                ));
         } else {
             return Optional.of(new LinkImpl<>(path, path, path, page, htmlAttributes));
         }
@@ -181,12 +197,11 @@ public class LinkHandler {
      * @return The validated link URL or {@code null} if not valid
      */
     @Nullable
-    private String validateAndResolveLinkURL(String linkURL) {
-        if (!StringUtils.isEmpty(linkURL)) {
-            return getLinkURL(linkURL);
-        } else {
-            return null;
-        }
+    private String validateAndResolveLinkURL(@Nullable final String linkURL) {
+        return Optional.ofNullable(linkURL)
+            .filter(StringUtils::isNotEmpty)
+            .map(this::getLinkURL)
+            .orElse(null);
     }
 
     /**
@@ -195,13 +210,11 @@ public class LinkHandler {
      *
      * @return The validated link target or {@code null} if not valid
      */
-    private String validateAndResolveLinkTarget(String linkTarget) {
-        if (linkTarget != null && VALID_LINK_TARGETS.contains(linkTarget)) {
-            return linkTarget;
-        }
-        else {
-            return null;
-        }
+    @Nullable
+    private String validateAndResolveLinkTarget(@Nullable final String linkTarget) {
+        return Optional.ofNullable(linkTarget)
+            .filter(VALID_LINK_TARGETS::contains)
+            .orElse(null);
     }
 
     /**
@@ -210,13 +223,12 @@ public class LinkHandler {
      *
      * @return The validated link accessibility label or {@code null} if not valid
      */
-    private String validateLinkAccessibilityLabel(String linkAccessibilityLabel) {
-        if (!StringUtils.isBlank(linkAccessibilityLabel)) {
-            return linkAccessibilityLabel.trim();
-        }
-        else {
-            return null;
-        }
+    @Nullable
+    private String validateLinkAccessibilityLabel(@Nullable final String linkAccessibilityLabel) {
+        return Optional.ofNullable(linkAccessibilityLabel)
+            .filter(StringUtils::isNotBlank)
+            .map(String::trim)
+            .orElse(null);
     }
 
     /**
@@ -225,13 +237,12 @@ public class LinkHandler {
      *
      * @return The validated link title attribute or {@code null} if not valid
      */
-    private String validateLinkTitleAttribute(String linkTitleAttribute) {
-        if (!StringUtils.isBlank(linkTitleAttribute)) {
-            return linkTitleAttribute.trim();
-        }
-        else {
-            return null;
-        }
+    @Nullable
+    private String validateLinkTitleAttribute(@Nullable final String linkTitleAttribute) {
+        return Optional.ofNullable(linkTitleAttribute)
+            .filter(StringUtils::isNotBlank)
+            .map(String::trim)
+            .orElse(null);
     }
 
     /**
@@ -242,7 +253,7 @@ public class LinkHandler {
      * @return the URL of the page identified by the provided {@code path}, or the original {@code path} if this doesn't identify a {@link Page}
      */
     @NotNull
-    private String getLinkURL(@NotNull String path) {
+    private String getLinkURL(@NotNull final String path) {
         return getPage(path)
                 .map(this::getPageLinkURL)
                 .orElse(path);
@@ -255,7 +266,7 @@ public class LinkHandler {
      * @return the URL of the provided (@code page}
      */
     @NotNull
-    private String getPageLinkURL(@NotNull Page page) {
+    private String getPageLinkURL(@NotNull final Page page) {
         return page.getPath() + HTML_EXTENSION;
     }
 
@@ -266,14 +277,10 @@ public class LinkHandler {
      * @return The {@link Page} corresponding to the path
      */
     @NotNull
-    private Optional<Page> getPage(@Nullable String path) {
-        if (pageManager == null) {
-            pageManager = request.getResourceResolver().adaptTo(PageManager.class);
-        }
-        if (pageManager == null) {
-            return Optional.empty();
-        }
-        return Optional.ofNullable(pageManager.getPage(path));
+    private Optional<Page> getPage(@Nullable final String path) {
+        return Optional.ofNullable(path)
+                .flatMap(p -> Optional.ofNullable(this.request.getResourceResolver().adaptTo(PageManager.class))
+                    .map(pm -> pm.getPage(p)));
     }
 
 }

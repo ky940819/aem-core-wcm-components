@@ -17,6 +17,7 @@ package com.adobe.cq.wcm.core.components.internal.link;
 
 import java.util.Optional;
 
+import com.adobe.cq.wcm.core.components.commons.link.LinkHandler;
 import org.apache.commons.httpclient.URI;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.sling.api.SlingHttpServletRequest;

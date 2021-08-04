@@ -22,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import com.adobe.cq.wcm.core.components.commons.link.Link;
-import com.adobe.cq.wcm.core.components.internal.link.LinkHandler;
+import com.adobe.cq.wcm.core.components.commons.link.LinkHandler;
 import com.adobe.cq.wcm.core.components.models.NavigationItem;
 import com.day.cq.wcm.api.Page;
 import com.day.cq.wcm.api.components.Component;
@@ -74,7 +74,7 @@ public class NavigationItemImpl extends PageListItemImpl implements NavigationIt
     @Override
     @JsonIgnore(false)
     @Nullable
-    public Link getLink() {
+    public Link<Page> getLink() {
         return super.getLink();
     }
 }
