@@ -103,7 +103,7 @@ public class ContainerImpl implements Container {
     @ValueMapValue(injectionStrategy = InjectionStrategy.OPTIONAL)
     @Nullable
     private String redirect;
-    
+
     @Self
     private LinkHandler linkHandler;
 
