@@ -322,7 +322,7 @@ public class Utils {
 
         if (imageFromPageImage) {
             Resource inheritedResource = null;
-            Optional<Link> link = linkHandler.getLink(resource);
+            Optional<Link<Page>> link = linkHandler.getLink(resource);
             boolean actionsEnabled = (currentStyle != null) ?
                     !currentStyle.get(Teaser.PN_ACTIONS_DISABLED, !properties.get(Teaser.PN_ACTIONS_ENABLED, false)) :
                     properties.get(Teaser.PN_ACTIONS_ENABLED, false);
