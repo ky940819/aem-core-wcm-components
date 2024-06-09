@@ -30,6 +30,50 @@
                 sling:resourceType="granite/ui/components/coral/foundation/tabs"
                 maximized="{Boolean}true">
                 <items jcr:primaryType="nt:unstructured">
+                    <main
+                        jcr:primaryType="nt:unstructured"
+                        jcr:title="Button"
+                        sling:resourceType="granite/ui/components/coral/foundation/container"
+                        margin="{Boolean}true">
+                        <items jcr:primaryType="nt:unstructured">
+                            <restrictIcons
+                                jcr:primaryType="nt:unstructured"
+                                text="Restrict icon options"
+                                fieldDescription="If enabled, the user will only be allowed to select icons from the list of allowed icons."
+                                value="{Boolean}true"
+                                uncheckedValue="false"
+                                name="./restrictIcons"
+                                sling:resourceType="granite/ui/components/coral/foundation/form/checkbox"/>
+                            <allowedIcons
+                                jcr:primaryType="nt:unstructured"
+                                sling:resourceType="granite/ui/components/coral/foundation/form/multifield"
+                                composite="{Boolean}true"
+                                fieldDescription="Set a list of icon options the author may choose from."
+                                fieldLabel="Allowed Icons">
+                                <field
+                                    jcr:primaryType="nt:unstructured"
+                                    sling:resourceType="granite/ui/components/coral/foundation/container"
+                                    name="./allowedIcons">
+                                    <items jcr:primaryType="nt:unstructured">
+                                        <text
+                                            jcr:primaryType="nt:unstructured"
+                                            sling:resourceType="granite/ui/components/coral/foundation/form/textfield"
+                                            emptyText="Text"
+                                            name="text"
+                                            required="{Boolean}true">
+                                        </text>
+                                        <value
+                                            jcr:primaryType="nt:unstructured"
+                                            sling:resourceType="granite/ui/components/coral/foundation/form/textfield"
+                                            emptyText="Value"
+                                            name="value"
+                                            required="{Boolean}true">
+                                        </value>
+                                    </items>
+                                </field>
+                            </allowedIcons>
+                        </items>
+                    </main>
                     <styletab
                         jcr:primaryType="nt:unstructured"
                         sling:resourceType="granite/ui/components/coral/foundation/include"
