@@ -1,0 +1,17 @@
+{
+    "jcr:primaryType": "nt:unstructured",
+    "sling:resourceType": "wcm/core/components/policy/policy",
+    "options": {
+        "jcr:primaryType": "nt:unstructured",
+        "item0": {
+            "jcr:primaryType": "nt:unstructured",
+            "text": "First Option Text",
+            "value": "first_option_value"
+        },
+        "item1": {
+            "jcr:primaryType": "nt:unstructured",
+            "text": "Second Option Text",
+            "value": "second_option_value"
+        }
+    }
+}

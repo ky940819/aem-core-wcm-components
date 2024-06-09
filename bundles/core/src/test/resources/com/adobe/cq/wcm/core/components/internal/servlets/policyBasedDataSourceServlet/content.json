@@ -1,0 +1,27 @@
+{
+    "jcr:resourceType": "nt:unstructured",
+    "component_composite": {
+        "jcr:resourceType": "nt:unstructured",
+        "sling:resourceType": "core/wcm/components/component_composite"
+    },
+    "component_non_composite": {
+        "jcr:resourceType": "nt:unstructured",
+        "sling:resourceType": "core/wcm/components/component_non_composite"
+    },
+    "compositeDataSource": {
+        "jcr:resourceType": "nt:unstructured",
+        "sling:resourceType": "core/wcm/components/commons/datasources/policyListValue/v1",
+        "datasource": {
+            "compositeFieldName": "options",
+            "compositeTextPropName": "text",
+            "compositeValuePropName": "value"
+        }
+    },
+    "nonCompositeDataSource": {
+        "jcr:resourceType": "nt:unstructured",
+        "sling:resourceType": "core/wcm/components/commons/datasources/policyListValue/v1",
+        "datasource": {
+            "propName": "options"
+        }
+    }
+}
